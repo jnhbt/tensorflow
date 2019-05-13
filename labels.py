@@ -25,10 +25,12 @@ def gen_labels(src="./src/text.txt",dist="./data/labels.txt"):
 
 def get_labels(src="./data/labels.txt"):
     labels_file = os.path.join(sys.path[0], src)
+    labels = {}
+    if os.path.exists(labels_file) is False:
+        return  labels
     fr = open(labels_file, "r+", encoding="utf-8")
     labels_content = fr.read().strip().replace("\n", "")
     fr.close()
-    labels = {}
     if len(labels_content) > 0:
         labels = json.loads(labels_content)
     return labels
