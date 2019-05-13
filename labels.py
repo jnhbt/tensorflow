@@ -9,13 +9,12 @@ def gen_labels(src="./src/text.txt",dist="./data/labels.txt"):
     fr = open(text_file,"r+",encoding="utf-8")
     content = fr.read().strip().replace("\n","")
     labels = get_labels(dist)
-    i = len(labels)
+    cnt = len(labels)
     labels_file = os.path.join(sys.path[0], dist)
     fw = open(labels_file, "w+", encoding="utf-8")
-    for char in content:
+    for index,char in enumerate(content,cnt+1):
         if char not in labels.values():
-            i = i + 1
-            key = str(i).zfill(5)
+            key = str(index).zfill(5)
             labels[key] = char
     json_labels = json.dumps(labels)
     fw.write(json_labels)
@@ -26,7 +25,7 @@ def gen_labels(src="./src/text.txt",dist="./data/labels.txt"):
 def get_labels(src="./data/labels.txt"):
     labels_file = os.path.join(sys.path[0], src)
     labels = {}
-    if os.path.exists(labels_file) is False:
+    if not os.path.exists(labels_file):
         return  labels
     fr = open(labels_file, "r+", encoding="utf-8")
     labels_content = fr.read().strip().replace("\n", "")
@@ -38,4 +37,6 @@ def get_labels(src="./data/labels.txt"):
 
 if __name__ == "__main__":
     #labels = gen_labels()
-    print(get_labels())
+    labels = get_labels()
+    for (key,char) in labels.items():
+        print(key+":"+char)
