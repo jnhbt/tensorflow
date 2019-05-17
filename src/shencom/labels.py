@@ -3,8 +3,7 @@ import sys
 import os
 import json
 
-
-def gen_labels(src="./src/text.txt",dist="./data/labels.txt"):
+def gen_labels(src="./text.txt",dist="../data/labels.txt"):
     text_file = os.path.join(sys.path[0],src)
     fr = open(text_file,"r+",encoding="utf-8")
     content = fr.read().strip().replace("\n","")
@@ -22,7 +21,7 @@ def gen_labels(src="./src/text.txt",dist="./data/labels.txt"):
     return labels
 
 
-def get_labels(src="./data/labels.txt"):
+def get_labels(src="../data/labels.txt"):
     labels_file = os.path.join(sys.path[0], src)
     labels = {}
     if not os.path.exists(labels_file):
