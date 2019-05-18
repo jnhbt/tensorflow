@@ -35,6 +35,7 @@ def get_fonts(font_dir="./fonts"):
 def gen_font_image(char,font_file,font_size=30,rotate=0):
     image = Image.new("RGB",(font_size,font_size),"#ffffff")
     width,height = get_rotate_size((font_size,font_size),rotate)
+    print(width,height,rotate)
     font = ImageFont.truetype(font_file,size=width)
     draw = ImageDraw.Draw(im=image)
     draw.text(((font_size-width)/2,(font_size-height)/2),char,fill="#000000",font=font)
@@ -54,30 +55,36 @@ def get_rotate_size(size,angle):
 def rotate_image(image,rotate=30):
     front_img = image.convert("RGBA")
     front_img = front_img.rotate(rotate)
+   # front_img.show()
     bg = Image.new('RGBA', front_img.size, (255, 255, 255, 255))
     dist = Image.composite(front_img, bg, mask=front_img)
     dist.convert(image.mode)
     return dist
 
+def batch_font_images(char,font_dir,img_dir,angles):
+    if os.path.exists(img_dir) is False:
+        os.mkdir(img_dir, 777)
+    fonts = os.listdir(font_dir)
+    pad_len = len(str(len(angles)*len(fonts)))
+    for font in fonts:
+        for i,angle in enumerate(angles):
+            image = gen_font_image(char, font_dir + "/" + font, font_size, angle)
+            image.save(img_dir + "/" + str(i+1).zfill(pad_len) + ".png")
+
+
 if __name__ == "__main__":
     label_dict = labels.get_labels("./data/labels.txt")
-    dist_dir = os.path.join(sys.path[0],"./dist");
-    font_dir = os.path.join(sys.path[0],"./fonts");
+    dist_dir = os.path.join(sys.path[0],"./dist")
+    font_dir = os.path.join(sys.path[0],"./fonts")
     font_size = 50
     rotate = 30
     step = 1
     angles = get_angles(rotate,step)
-    for (key,val) in label_dict.items():
-        path = dist_dir+"/"+key;
-        if os.path.exists(path) is False:
-            os.mkdir(path,777)
-        angle = 0;
-        i = 0
-        for font in os.listdir(font_dir):
-            angle = angles[i]
-            image = gen_font_image(val,font_dir+"/"+font,font_size,angle)
-            i += 1
-            image.save(path+"/"+ str(i).zfill(2)+".png")
+    # for (key,val) in label_dict.items():
+    #     img_dir = dist_dir+"/"+key;
+    #     batch_font_images(val,font_dir,img_dir,angles)
+    img_dir = dist_dir + "/test" ;
+    batch_font_images("你",font_dir,img_dir,angles)
 
 
  #   image.rotate(30)
