@@ -6,13 +6,13 @@ import json
 def gen_labels(src="./text.txt",dist="../data/labels.txt"):
     text_file = os.path.join(sys.path[0],src)
     fr = open(text_file,"r+",encoding="utf-8")
-    content = fr.read().strip().replace("\n","")
+    content = fr.read().replace("\n","").replace(" ","")
     labels = get_labels(dist)
     cnt = len(labels)
     labels_file = os.path.join(sys.path[0], dist)
     fw = open(labels_file, "w+", encoding="utf-8")
     for index,char in enumerate(content,cnt+1):
-        if char not in labels.values():
+        if char != None and char not in labels.values():
             key = str(index).zfill(5)
             labels[key] = char
     json_labels = json.dumps(labels)
@@ -35,7 +35,7 @@ def get_labels(src="../data/labels.txt"):
 
 
 if __name__ == "__main__":
-    #labels = gen_labels()
-    labels = get_labels()
-    for (key,char) in labels.items():
-        print(key+":"+char)
+    labels = gen_labels("../../assets/text.txt","../../data/labels.txt")
+    # labels = get_labels()
+    # for (key,char) in labels.items():
+    #     print(key+":"+char)

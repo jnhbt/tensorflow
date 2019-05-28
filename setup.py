@@ -21,7 +21,7 @@ def get_angles(rotate=30,step=1):
             angles.append(i)
         for i in range(-rotate, 0, step):
             angles.append(i)
-    return angles;
+    return angles
 
 
 def get_fonts(font_dir="./fonts"):
@@ -32,33 +32,55 @@ def get_fonts(font_dir="./fonts"):
             fonts.append(font)
     return fonts;
 
-def gen_font_image(char,font_file,font_size=30,rotate=0):
+def gen_font_image(char,font_file,font_size=30,angle=0):
     image = Image.new("RGB",(font_size,font_size),"#ffffff")
-    width,height = get_rotate_size((font_size,font_size),rotate)
-    print(width,height,rotate)
-    font = ImageFont.truetype(font_file,size=width)
+    font = ImageFont.truetype(font_file,size=font_size)
+    font_w,font_h = font.getsize(char)
     draw = ImageDraw.Draw(im=image)
-    draw.text(((font_size-width)/2,(font_size-height)/2),char,fill="#000000",font=font)
-    if rotate != 0:
-        image = rotate_image(image,rotate)
+    draw.text(((font_size-font_w)/2,(font_size-font_h)/2),char,fill="#000000",font=font)
+    if angle != 0:
+        image = rotate_image(image,angle)
     return image
 
 def get_rotate_size(size,angle):
-    radius =  math.pi*angle/180
+    radius =  math.pi*abs(angle)/180
     width,height = size
-    ratio = abs(math.cos(radius));
+    #b*cos(radius)+b*sin(radius) = a
+    # b = a/(sin(radius)+cos(radius))
+    ratio = math.sin(radius)+math.cos(radius)
     if ratio > 0:
-        width = math.floor(width*ratio)
-        height = math.floor(height*ratio)
+        width = int(width//ratio)
+        height = int(height//ratio)
     return width,height
 
-def rotate_image(image,rotate=30):
-    front_img = image.convert("RGBA")
-    front_img = front_img.rotate(rotate)
-   # front_img.show()
-    bg = Image.new('RGBA', front_img.size, (255, 255, 255, 255))
-    dist = Image.composite(front_img, bg, mask=front_img)
-    dist.convert(image.mode)
+def rotate_image(image,angle=30):
+    #将普通PIL.Image图像转成cv2图像
+    image = cv2.cvtColor(np.asarray(image),cv2.COLOR_RGB2BGR)
+
+    (h, w) = image.shape[:2]
+    (cX, cY) = (w // 2, h // 2)
+    # grab the rotation matrix (applying the negative of the
+    # angle to rotate clockwise), then grab the sine and cosine
+    # (i.e., the rotation components of the matrix)
+    # -angle位置参数为角度参数负值表示顺时针旋转; 1.0位置参数scale是调整尺寸比例（图像缩放参数），建议0.75
+    M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+    cos = np.abs(M[0, 0])
+    sin = np.abs(M[0, 1])
+
+    # compute the new bounding dimensions of the image
+    nW = int((h * sin) + (w * cos))
+    nH = int((h * cos) + (w * sin))
+
+    # adjust the rotation matrix to take into account translation
+    M[0, 2] += (nW / 2) - cX
+    M[1, 2] += (nH / 2) - cY
+
+    # perform the actual rotation and return the image
+    # borderValue 缺失背景填充色彩，此处为白色，可自定义
+    dist =  cv2.warpAffine(image, M, (nW, nH), borderValue=(255, 255, 255))
+    #将cv2图像转化成PIL.Image图像
+    dist = Image.fromarray(cv2.cvtColor(dist,cv2.COLOR_BGR2RGB))
+    dist = dist.resize((w,h),Image.ANTIALIAS)
     return dist
 
 def batch_font_images(char,font_dir,img_dir,angles):
@@ -66,10 +88,12 @@ def batch_font_images(char,font_dir,img_dir,angles):
         os.mkdir(img_dir, 777)
     fonts = os.listdir(font_dir)
     pad_len = len(str(len(angles)*len(fonts)))
+    num = 0;
     for font in fonts:
-        for i,angle in enumerate(angles):
+        for angle in angles:
             image = gen_font_image(char, font_dir + "/" + font, font_size, angle)
-            image.save(img_dir + "/" + str(i+1).zfill(pad_len) + ".png")
+            num += 1
+            image.save(img_dir + "/" + str(num).zfill(pad_len) + ".png")
 
 
 if __name__ == "__main__":
@@ -80,11 +104,13 @@ if __name__ == "__main__":
     rotate = 30
     step = 1
     angles = get_angles(rotate,step)
-    # for (key,val) in label_dict.items():
-    #     img_dir = dist_dir+"/"+key;
-    #     batch_font_images(val,font_dir,img_dir,angles)
-    img_dir = dist_dir + "/test" ;
-    batch_font_images("你",font_dir,img_dir,angles)
+    for (key,val) in label_dict.items():
+        img_dir = dist_dir+"/"+key;
+        batch_font_images(val,font_dir,img_dir,angles)
+    # img_dir = dist_dir + "/test"
+    # batch_font_images("你",font_dir,img_dir,angles)
+    # image = gen_font_image("你", font_dir + "/STXINWEI.TTF",font_size)
+    # image.show()
 
 
  #   image.rotate(30)
